@@ -12,6 +12,7 @@
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
+#include "utils/bson.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 

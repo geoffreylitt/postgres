@@ -374,6 +374,8 @@ DESCR("storage manager");
 /* OIDS 400 - 499 */
 
 /* OIDS 500 - 599 */
+DATA(insert OID = 514 ( bson		   PGNSP PGUID -1 f b U f t \054 0 0 199 bson_in bson_out bson_recv bson_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+#define BSONOID 514
 
 /* OIDS 600 - 699 */
 DATA(insert OID = 600 (  point	   PGNSP PGUID 16 f b G f t \054 0 701 1017 point_in point_out point_recv point_send - - - d p f 0 -1 0 0 _null_ _null_ _null_ ));
