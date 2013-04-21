@@ -156,6 +156,33 @@ text_to_cstring(const text *t)
 }
 
 /*
+ * text_to_cstring_no_null
+ *
+ * Create a palloc'd C string from a text value. NOT NULL TERMINATED!
+ *
+ * We support being passed a compressed or toasted text value.
+ * This is a bit bogus since such values shouldn't really be referred to as
+ * "text *", but it seems useful for robustness.  If we didn't handle that
+ * case here, we'd need another routine that did, anyway.
+ */
+char *
+text_to_cstring_no_null(const text *t)
+{
+	/* must cast away the const, unfortunately */
+	text	   *tunpacked = pg_detoast_datum_packed((struct varlena *) t);
+	int			len = VARSIZE_ANY_EXHDR(tunpacked);
+	char	   *result;
+
+	result = (char *) palloc(len);
+	memcpy(result, VARDATA_ANY(tunpacked), len);
+
+	if (tunpacked != t)
+		pfree(tunpacked);
+
+	return result;
+}
+
+/*
  * text_to_cstring_buffer
  *
  * Copy a text value into a caller-supplied buffer of size dst_len.

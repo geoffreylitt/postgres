@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * bson`.c
+ * bson.c
  *		BSON data type support.
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
@@ -29,6 +29,9 @@
 #include "utils/bsonapi.h"
 #include "utils/typcache.h"
 #include "utils/syscache.h"
+
+#include "json-c/json.h"
+#include "mongo.h"
 
 /*
  * The context of the parser is maintained by the recursive descent
@@ -76,6 +79,90 @@ static bsonSemAction nullSemAction =
 	NULL, NULL, NULL, NULL, NULL
 };
 static BsonSemAction NullSemAction = &nullSemAction;
+
+/* JSON to BSON conversion functions */
+/* adapted (slightly modified) from mongo-c-driver tests */
+
+void json_to_bson_append_element( bson *b , const char *k , struct json_object *v );
+
+/**
+   should already have called start_array
+   this will not call start/finish
+ */
+void json_to_bson_append_array( bson *b , struct json_object *a ) {
+    int i;
+    char buf[10];
+    for ( i=0; i<json_object_array_length( a ); i++ ) {
+        sprintf( buf , "%d" , i );
+        json_to_bson_append_element( b , buf , json_object_array_get_idx( a , i ) );
+    }
+}
+
+void json_to_bson_append( bson *b , struct json_object *o ) {
+    json_object_object_foreach( o,k,v ) {
+        json_to_bson_append_element( b , k , v );
+    }
+}
+
+void json_to_bson_append_element( bson *b , const char *k , struct json_object *v ) {
+    if ( ! v ) {
+        bson_append_null( b , k );
+        return;
+    }
+
+    switch ( json_object_get_type( v ) ) {
+    case json_type_int:
+        bson_append_int( b , k , json_object_get_int( v ) );
+        break;
+    case json_type_boolean:
+        bson_append_bool( b , k , json_object_get_boolean( v ) );
+        break;
+    case json_type_double:
+        bson_append_double( b , k , json_object_get_double( v ) );
+        break;
+    case json_type_string:
+        bson_append_string( b , k , json_object_get_string( v ) );
+        break;
+    case json_type_object:
+        bson_append_start_object( b , k );
+        json_to_bson_append( b , v );
+        bson_append_finish_object( b );
+        break;
+    case json_type_array:
+        bson_append_start_array( b , k );
+        json_to_bson_append_array( b , v );
+        bson_append_finish_object( b );
+        break;
+    default:
+        fprintf( stderr , "can't handle type for : %s\n" , json_object_to_json_string( v ) );
+    }
+}
+
+
+char *json_to_bson( char *js, int *dataSize) {
+    struct json_object *o = json_tokener_parse( js );
+    bson b[1];
+
+    if ( is_error( o ) ) {
+        fprintf( stderr , "\t ERROR PARSING\n" );
+        return 0;
+    }
+
+    if ( ! json_object_is_type( o , json_type_object ) ) {
+        fprintf( stderr , "json_to_bson needs a JSON object, not type\n" );
+        return 0;
+    }
+
+    bson_init( b );
+    json_to_bson_append( b , o );
+    bson_finish( b );
+    printf("printing bson...\n");
+    bson_print( b );
+
+    *dataSize = b->dataSize;
+    return b->data;
+}
+
 
 /* Recursive Descent parser support routines */
 
@@ -168,12 +255,17 @@ bson_in(PG_FUNCTION_ARGS)
 	text	   *result = cstring_to_text(bson);
 	BsonLexContext *lex;
 
+	char 	   *bsonData;
+	int      dataSize;
+
 	/* validate it */
 	lex = makeBsonLexContext(result, false);
 	pg_parse_bson(lex, NullSemAction);
 
+	bsonData = json_to_bson(bson, &dataSize);
+
 	/* Internal representation is the same as text, for now */
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(bsonData, dataSize));
 }
 
 /*
@@ -184,6 +276,12 @@ bson_out(PG_FUNCTION_ARGS)
 {
 	/* we needn't detoast because text_to_cstring will handle that */
 	Datum		txt = PG_GETARG_DATUM(0);
+	char 	  *bsonData= text_to_cstring_no_null((text *) DatumGetPointer(txt));
+
+	bson b[1];
+	bson_init_finished_data( b, bsonData, 0);
+	printf("About to print bson binary data...\n");
+	bson_print( b );
 
 	PG_RETURN_CSTRING(TextDatumGetCString(txt));
 }
