@@ -359,6 +359,9 @@ DESCR("XML content");
 #define XMLOID 142
 DATA(insert OID = 143 ( _xml	   PGNSP PGUID -1 f b A f t \054 0 142 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 199 ( _json	   PGNSP PGUID -1 f b A f t \054 0 114 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID =150 ( bson		   PGNSP PGUID -1 f b U f t \054 0 0 198 bson_in bson_out bson_recv bson_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+#define BSONOID 150
+DATA(insert OID = 198 ( _bson	   PGNSP PGUID -1 f b A f t \054 0 150 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 DATA(insert OID = 194 ( pg_node_tree	PGNSP PGUID -1 f b S f t \054 0 0 0 pg_node_tree_in pg_node_tree_out pg_node_tree_recv pg_node_tree_send - - - i x f 0 -1 0 100 _null_ _null_ _null_ ));
 DESCR("string representing an internal node tree");
@@ -374,8 +377,6 @@ DESCR("storage manager");
 /* OIDS 400 - 499 */
 
 /* OIDS 500 - 599 */
-DATA(insert OID = 514 ( bson		   PGNSP PGUID -1 f b U f t \054 0 0 199 bson_in bson_out bson_recv bson_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-#define BSONOID 514
 
 /* OIDS 600 - 699 */
 DATA(insert OID = 600 (  point	   PGNSP PGUID 16 f b G f t \054 0 701 1017 point_in point_out point_recv point_send - - - d p f 0 -1 0 0 _null_ _null_ _null_ ));

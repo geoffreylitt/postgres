@@ -32,6 +32,8 @@
 #include "utils/memutils.h"
 #include "utils/typcache.h"
 
+#include "bson.h"
+
 /* semantic action functions for bson_object_keys */
 static void okeys_object_field_start(void *state, char *fname, bool isnull);
 static void okeys_array_start(void *state);
@@ -345,12 +347,19 @@ okeys_scalar(void *state, char *token, BsonTokenType tokentype)
 Datum
 bson_object_field(PG_FUNCTION_ARGS)
 {
+	bson b[1];
+	bson_iterator it;
+
 	text	   *bson = PG_GETARG_TEXT_P(0);
 	text	   *result;
 	text	   *fname = PG_GETARG_TEXT_P(1);
 	char	   *fnamestr = text_to_cstring(fname);
 
-	result = get_worker(bson, fnamestr, -1, NULL, NULL, -1, false);
+	bson_init(b);
+	bson_iterator_init(&it, b);
+	bson_find(&it, b, fnamestr); //advance iterator to correct key
+	result = bson_iterator_string(&it);
+	elog(LOG, "bson string result: %s", result);
 
 	if (result != NULL)
 		PG_RETURN_TEXT_P(result);

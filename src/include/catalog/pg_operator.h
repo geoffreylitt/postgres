@@ -1737,6 +1737,19 @@ DESCR("get value from json with path elements");
 DATA(insert OID = 3967 (  "#>>"    PGNSP PGUID b f f 114 1009 25 0 0 json_extract_path_text_op - - ));
 DESCR("get value from json as text with path elements");
 
+DATA(insert OID = 3968 (  "->"	   PGNSP PGUID b f f 514 25 514 0 0 bson_object_field - - ));
+DESCR("get bson object field");
+DATA(insert OID = 3969 (  "->>"    PGNSP PGUID b f f 514 25 25 0 0 bson_object_field_text - - ));
+DESCR("get bson object field as text");
+DATA(insert OID = 3970 (  "->"	   PGNSP PGUID b f f 514 23 514 0 0 bson_array_element - - ));
+DESCR("get bson array element");
+DATA(insert OID = 3971 (  "->>"    PGNSP PGUID b f f 514 23 25 0 0 bson_array_element_text - - ));
+DESCR("get bson array element as text");
+DATA(insert OID = 3972 (  "#>"     PGNSP PGUID b f f 514 1009 514 0 0 bson_extract_path_op - - ));
+DESCR("get value from bson with path elements");
+DATA(insert OID = 3973 (  "#>>"    PGNSP PGUID b f f 514 1009 25 0 0 bson_extract_path_text_op - - ));
+DESCR("get value from bson as text with path elements");
+
 
 
 /*
