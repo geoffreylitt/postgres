@@ -349,26 +349,37 @@ bson_object_field(PG_FUNCTION_ARGS)
 {
 	bson b[1];
 	bson_iterator it;
+	int32 result_int;
+	text	   *result_str;
 
 	elog(LOG, "Entered bson_object_field function");
 
 	text	   *bson = PG_GETARG_TEXT_P(0);
-	text	   *result;
 	text	   *fname = PG_GETARG_TEXT_P(1);
 	char	   *fnamestr = text_to_cstring(fname);
-
 	char	   *bsonData = text_to_cstring_no_null(bson);
 
 	bson_init_finished_data(b, bsonData, 0);
 	bson_iterator_init(&it, b);
 	bson_find(&it, b, fnamestr); //advance iterator to correct key
-	result = bson_iterator_string(&it);
-	elog(LOG, "bson string result: %s", result);
+	switch(bson_iterator_type(&it)){
+		case BSON_STRING:
+			result_str = cstring_to_text(bson_iterator_string(&it));
+			if (result_str != NULL)
+				PG_RETURN_TEXT_P(result_str);
+			else
+				PG_RETURN_NULL();
+			break;
 
-	if (result != NULL)
-		PG_RETURN_TEXT_P(result);
-	else
-		PG_RETURN_NULL();
+		case BSON_INT:
+			result_int = bson_iterator_int(&it);
+			PG_RETURN_INT32(result_int);
+			break;
+	}
+
+  /* not reached if above code returns a result */
+	PG_RETURN_NULL();	
+
 }
 
 Datum
