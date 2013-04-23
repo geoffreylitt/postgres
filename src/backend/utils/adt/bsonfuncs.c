@@ -350,12 +350,16 @@ bson_object_field(PG_FUNCTION_ARGS)
 	bson b[1];
 	bson_iterator it;
 
+	elog(LOG, "Entered bson_object_field function");
+
 	text	   *bson = PG_GETARG_TEXT_P(0);
 	text	   *result;
 	text	   *fname = PG_GETARG_TEXT_P(1);
 	char	   *fnamestr = text_to_cstring(fname);
 
-	bson_init(b);
+	char	   *bsonData = text_to_cstring_no_null(bson);
+
+	bson_init_finished_data(b, bsonData, 0);
 	bson_iterator_init(&it, b);
 	bson_find(&it, b, fnamestr); //advance iterator to correct key
 	result = bson_iterator_string(&it);

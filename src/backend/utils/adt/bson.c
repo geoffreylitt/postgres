@@ -274,14 +274,10 @@ bson_in(PG_FUNCTION_ARGS)
 Datum
 bson_out(PG_FUNCTION_ARGS)
 {
-	/* we needn't detoast because text_to_cstring will handle that */
-	Datum		txt = PG_GETARG_DATUM(0);
-	char 	  *bsonData= text_to_cstring_no_null((text *) DatumGetPointer(txt));
 
-	bson b[1];
-	bson_init_finished_data( b, bsonData, 0);
-	printf("About to print bson binary data...\n");
-	bson_print( b );
+	/*I think this is just for literally printing out output, so not important*/
+
+	Datum		txt = PG_GETARG_DATUM(0);
 
 	PG_RETURN_CSTRING(TextDatumGetCString(txt));
 }
