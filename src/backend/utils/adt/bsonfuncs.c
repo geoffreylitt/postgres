@@ -349,7 +349,6 @@ bson_object_field(PG_FUNCTION_ARGS)
 {
 	bson b[1];
 	bson_iterator it;
-	int32 result_int;
 	text	   *result_str;
 
 	elog(LOG, "Entered bson_object_field function");
@@ -364,21 +363,25 @@ bson_object_field(PG_FUNCTION_ARGS)
 	bson_find(&it, b, fnamestr); //advance iterator to correct key
 	switch(bson_iterator_type(&it)){
 		case BSON_STRING:
+			elog(LOG, "bson type recognized as string");
 			result_str = cstring_to_text(bson_iterator_string(&it));
-			if (result_str != NULL)
-				PG_RETURN_TEXT_P(result_str);
-			else
-				PG_RETURN_NULL();
 			break;
 
-		case BSON_INT:
-			result_int = bson_iterator_int(&it);
-			PG_RETURN_INT32(result_int);
+		case BSON_BOOL:
+			elog(LOG, "bson type recognized as bool");
+		  if(bson_iterator_bool(&it) == 1){
+		  	result_str = cstring_to_text("true");
+		  }
+		  else{
+		  	result_str = cstring_to_text("false");
+		  }
 			break;
 	}
 
-  /* not reached if above code returns a result */
-	PG_RETURN_NULL();	
+	if (result_str != NULL)
+		PG_RETURN_TEXT_P(result_str);
+	else
+		PG_RETURN_NULL();
 
 }
 
