@@ -4205,6 +4205,10 @@ DATA(insert OID = 5960 (  bson_populate_record     PGNSP PGUID 12 1 0 0 0 f f f 
 DESCR("get record fields from a bson object");
 DATA(insert OID = 5961 (  bson_populate_recordset  PGNSP PGUID 12 1 100 0 0 f f f f f t s 3 0 2283 "2283 150 16" _null_ _null_ _null_ _null_ bson_populate_recordset _null_ _null_ _null_ ));
 DESCR("get set of records with fields from a bson array of objects");
+DATA(insert OID = 5962 (  bson_object_field_as_int PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "150 25" _null_ _null_ "{from_bson, field_name}" _null_ bson_object_field_as_int _null_ _null_ _null_ ));
+DESCR("get bson object field");
+DATA(insert OID = 5963 (  bson_object_field_as_bool PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "150 25" _null_ _null_ "{from_bson, field_name}" _null_ bson_object_field_as_bool _null_ _null_ _null_ ));
+DESCR("get bson object field");
 
 /* uuid */
 DATA(insert OID = 2952 (  uuid_in		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2950 "2275" _null_ _null_ _null_ _null_ uuid_in _null_ _null_ _null_ ));

@@ -156,8 +156,6 @@ char *json_to_bson( char *js, int *dataSize) {
     bson_init( b );
     json_to_bson_append( b , o );
     bson_finish( b );
-    printf("printing bson...\n");
-    bson_print( b );
 
     *dataSize = b->dataSize;
     return b->data;
@@ -251,6 +249,11 @@ lex_expect(BsonParseContext ctx, BsonLexContext *lex, BsonTokenType token)
 Datum
 bson_in(PG_FUNCTION_ARGS)
 {
+	bson b[1];
+	bson_iterator it;
+
+	bson inner[1];
+
 	char	   *bson = PG_GETARG_CSTRING(0);
 	text	   *result = cstring_to_text(bson);
 	BsonLexContext *lex;
@@ -258,13 +261,31 @@ bson_in(PG_FUNCTION_ARGS)
 	char 	   *bsonData;
 	int      dataSize;
 
+/*
+	//TESTING BSON NESTING
+
+	char *bsonTestData;
+	char *bsonInnerTestData;
+	int dataSizeTest;
+
+	bsonTestData = json_to_bson("{\"obj\":{\"inner\":\"hi\"}}", &dataSizeTest);
+	bson_init_finished_data(b, bsonTestData, 0);
+	bson_print(b);
+	bson_iterator_init(&it, b);
+	bson_iterator_next(&it);
+
+	bsonInnerTestData = bson_iterator_value(&it);
+	bson_init_finished_data(inner, bsonInnerTestData, 0);
+	bson_print(inner);
+*/
+
 	/* validate it */
 	lex = makeBsonLexContext(result, false);
 	pg_parse_bson(lex, NullSemAction);
 
 	bsonData = json_to_bson(bson, &dataSize);
 
-	/* Internal representation is the same as text, for now */
+	/* Internal representation is the same as text */
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(bsonData, dataSize));
 }
 
@@ -276,8 +297,11 @@ bson_out(PG_FUNCTION_ARGS)
 {
 
 	/*I think this is just for literally printing out output, so not important*/
+	elog(LOG, "in bson_out");
 
 	Datum		txt = PG_GETARG_DATUM(0);
+
+	elog(LOG, "getarg_datum succeeded");
 
 	PG_RETURN_CSTRING(TextDatumGetCString(txt));
 }

@@ -1750,7 +1750,11 @@ DESCR("get value from bson with path elements");
 DATA(insert OID = 3973 (  "#>>"    PGNSP PGUID b f f 150 1009 25 0 0 bson_extract_path_text_op - - ));
 DESCR("get value from bson as text with path elements");
 
-
+/* additional BSON operators which return native int or bool types, instead of text */
+DATA(insert OID = 3974 (  "-#>"	   PGNSP PGUID b f f 150 25 23 0 0 bson_object_field_as_int - - ));
+DESCR("get bson object field as integer");
+DATA(insert OID = 3975 (  "-&>"	   PGNSP PGUID b f f 150 25 16 0 0 bson_object_field_as_bool - - ));
+DESCR("get bson object field as boolean");
 
 /*
  * function prototypes

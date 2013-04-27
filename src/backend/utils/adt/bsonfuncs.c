@@ -343,16 +343,19 @@ okeys_scalar(void *state, char *token, BsonTokenType tokentype)
  * and the bson_extract_path*(bson, text, ...) functions
  */
 
+/* bson_object_field AND bson_object_field_text always return text */
 
 Datum
 bson_object_field(PG_FUNCTION_ARGS)
 {
 	bson b[1];
-	bson_iterator it;
-	text	   *result_str;
+	bson_iterator it, it2;
+	text	   *result_str = NULL;
+  char     int_str[25];
+  char     *bsonNestedObjData;
+  int      nestedObjLength;
 
-	elog(LOG, "Entered bson_object_field function");
-
+  elog(LOG, "In bson_object_field normal");
 	text	   *bson = PG_GETARG_TEXT_P(0);
 	text	   *fname = PG_GETARG_TEXT_P(1);
 	char	   *fnamestr = text_to_cstring(fname);
@@ -360,60 +363,195 @@ bson_object_field(PG_FUNCTION_ARGS)
 
 	bson_init_finished_data(b, bsonData, 0);
 	bson_iterator_init(&it, b);
-	bson_find(&it, b, fnamestr); //advance iterator to correct key
-	switch(bson_iterator_type(&it)){
+	switch(bson_find(&it, b, fnamestr)){
 		case BSON_STRING:
-			elog(LOG, "bson type recognized as string");
 			result_str = cstring_to_text(bson_iterator_string(&it));
 			break;
 
 		case BSON_BOOL:
-			elog(LOG, "bson type recognized as bool");
 		  if(bson_iterator_bool(&it) == 1){
-		  	result_str = cstring_to_text("true");
+		  	result_str = cstring_to_text("t");
 		  }
 		  else{
-		  	result_str = cstring_to_text("false");
+		  	result_str = cstring_to_text("f");
 		  }
 			break;
+
+    case BSON_INT:
+      sprintf(int_str, "%d", bson_iterator_int(&it));
+      result_str = cstring_to_text(int_str);
+      break;
+
+    case BSON_OBJECT:
+    case BSON_ARRAY:
+      bson_iterator_subiterator(&it, &it2);
+      while(bson_iterator_next(&it2) != BSON_EOO); //move it2 to end of nested object
+      nestedObjLength = bson_iterator_value(&it2) - bson_iterator_value(&it);
+      elog(LOG, "nested object length: %d", nestedObjLength);
+      result_str = (char *) palloc(nestedObjLength);
+      elog(LOG, "palloc succeeded");
+      memcpy(bsonNestedObjData, bson_iterator_value(&it), nestedObjLength);
+      elog(LOG, "memcpy succeeded");
+      result_str = cstring_to_text_with_len(bsonNestedObjData, nestedObjLength);
+      elog(LOG, "cstring to text succeeded");
+      break;
 	}
 
 	if (result_str != NULL)
 		PG_RETURN_TEXT_P(result_str);
 	else
 		PG_RETURN_NULL();
-
 }
 
 Datum
 bson_object_field_text(PG_FUNCTION_ARGS)
 {
-	text	   *bson = PG_GETARG_TEXT_P(0);
-	text	   *result;
-	text	   *fname = PG_GETARG_TEXT_P(1);
-	char	   *fnamestr = text_to_cstring(fname);
+  bson b[1];
+  bson_iterator it;
+  text     *result_str = NULL;
+  char     int_str[25];
 
-	result = get_worker(bson, fnamestr, -1, NULL, NULL, -1, true);
+  elog(LOG, "In bson_object_field normal");
+  text     *bson = PG_GETARG_TEXT_P(0);
+  text     *fname = PG_GETARG_TEXT_P(1);
+  char     *fnamestr = text_to_cstring(fname);
+  char     *bsonData = text_to_cstring_no_null(bson);
 
-	if (result != NULL)
-		PG_RETURN_TEXT_P(result);
-	else
-		PG_RETURN_NULL();
+  bson_init_finished_data(b, bsonData, 0);
+  bson_iterator_init(&it, b);
+  switch(bson_find(&it, b, fnamestr)){
+    case BSON_STRING:
+      result_str = cstring_to_text(bson_iterator_string(&it));
+      break;
+
+    case BSON_BOOL:
+      if(bson_iterator_bool(&it) == 1){
+        result_str = cstring_to_text("t");
+      }
+      else{
+        result_str = cstring_to_text("f");
+      }
+      break;
+
+    case BSON_INT:
+      sprintf(int_str, "%d", bson_iterator_int(&it));
+      result_str = cstring_to_text(int_str);
+      break;
+  }
+
+  if (result_str != NULL)
+    PG_RETURN_TEXT_P(result_str);
+  else
+    PG_RETURN_NULL();
+}
+
+Datum
+bson_object_field_as_int(PG_FUNCTION_ARGS)
+{
+  bson b[1];
+  bson_iterator it;
+  int32 result;
+
+  elog(LOG, "In bson object field as int");
+  text     *bson = PG_GETARG_TEXT_P(0);
+  text     *fname = PG_GETARG_TEXT_P(1);
+  char     *fnamestr = text_to_cstring(fname);
+  char     *bsonData = text_to_cstring_no_null(bson);
+
+  bson_init_finished_data(b, bsonData, 0);
+  bson_iterator_init(&it, b);
+
+  if(bson_find(&it, b, fnamestr) == BSON_INT){
+    result = (int32) bson_iterator_int(&it);
+    elog(LOG, "int32 result: %d", result);
+    PG_RETURN_INT32(result);
+  }
+  else{
+    elog(LOG, "returning null from bson int!");
+    PG_RETURN_NULL();
+  }
+}
+
+Datum
+bson_object_field_as_bool(PG_FUNCTION_ARGS)
+{
+  bson b[1];
+  bson_iterator it;
+
+  elog(LOG, "In bson object field as boolean");
+  text     *bson = PG_GETARG_TEXT_P(0);
+  text     *fname = PG_GETARG_TEXT_P(1);
+  char     *fnamestr = text_to_cstring(fname);
+  char     *bsonData = text_to_cstring_no_null(bson);
+
+  bson_init_finished_data(b, bsonData, 0);
+  bson_iterator_init(&it, b);
+
+  if(bson_find(&it, b, fnamestr) == BSON_BOOL){
+    PG_RETURN_BOOL(bson_iterator_bool(&it));
+  }
+  else{
+    PG_RETURN_NULL();
+  }
 }
 
 Datum
 bson_array_element(PG_FUNCTION_ARGS)
 {
-	text	   *bson = PG_GETARG_TEXT_P(0);
-	text	   *result;
-	int			element = PG_GETARG_INT32(1);
+  bson b[1];
+  bson_iterator it, it2;
+  text     *result_str = NULL;
+  char     int_str[25];
+  char     *bsonNestedObjData;
+  int      nestedObjLength;
+  int i;
 
-	result = get_worker(bson, NULL, element, NULL, NULL, -1, false);
+  elog(LOG, "In bson_array_element");
+  text     *bson = PG_GETARG_TEXT_P(0);
+  int      arrIndex = PG_GETARG_INT32(1);
+  char     *bsonData = text_to_cstring_no_null(bson);
 
-	if (result != NULL)
-		PG_RETURN_TEXT_P(result);
-	else
-		PG_RETURN_NULL();
+  bson_init_finished_data(b, bsonData, 0);
+  bson_iterator_init(&it, b);
+  bson_iterator_next(&it); //get iterator to the first element
+  /* get to the correct index in the array */
+  for(i = 0; i < arrIndex; i++){
+    bson_iterator_next(&it);
+  }
+  switch(bson_iterator_type(&it)){
+    case BSON_STRING:
+      result_str = cstring_to_text(bson_iterator_string(&it));
+      break;
+
+    case BSON_BOOL:
+      if(bson_iterator_bool(&it) == 1){
+        result_str = cstring_to_text("t");
+      }
+      else{
+        result_str = cstring_to_text("f");
+      }
+      break;
+
+    case BSON_INT:
+      sprintf(int_str, "%d", bson_iterator_int(&it));
+      result_str = cstring_to_text(int_str);
+      break;
+
+    case BSON_OBJECT:
+    case BSON_ARRAY: 
+      bson_iterator_subiterator(&it, &it2);
+      while(bson_iterator_next(&it2) != BSON_EOO); //move it2 to end of nested object
+      nestedObjLength = bson_iterator_value(&it2) - bson_iterator_value(&it);
+      result_str = (char *) palloc(nestedObjLength * sizeof(char));
+      memcpy(bsonNestedObjData, bson_iterator_value(&it), nestedObjLength);
+      result_str = cstring_to_text_with_len(bsonNestedObjData, nestedObjLength);
+      break;
+  }
+
+  if (result_str != NULL)
+    PG_RETURN_TEXT_P(result_str);
+  else
+    PG_RETURN_NULL();
 }
 
 Datum

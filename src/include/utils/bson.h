@@ -36,6 +36,8 @@ extern void escape_bson(StringInfo buf, const char *str);
 /* functions in bsonfuncs.c */
 extern Datum bson_object_field(PG_FUNCTION_ARGS);
 extern Datum bson_object_field_text(PG_FUNCTION_ARGS);
+extern Datum bson_object_field_as_int(PG_FUNCTION_ARGS);
+extern Datum bson_object_field_as_bool(PG_FUNCTION_ARGS);
 extern Datum bson_array_element(PG_FUNCTION_ARGS);
 extern Datum bson_array_element_text(PG_FUNCTION_ARGS);
 extern Datum bson_extract_path(PG_FUNCTION_ARGS);
