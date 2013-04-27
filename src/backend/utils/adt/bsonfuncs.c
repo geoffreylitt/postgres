@@ -355,7 +355,6 @@ bson_object_field(PG_FUNCTION_ARGS)
   char     *bsonNestedObjData;
   int      nestedObjLength;
 
-  elog(LOG, "In bson_object_field normal");
 	text	   *bson = PG_GETARG_TEXT_P(0);
 	text	   *fname = PG_GETARG_TEXT_P(1);
 	char	   *fnamestr = text_to_cstring(fname);
@@ -387,13 +386,9 @@ bson_object_field(PG_FUNCTION_ARGS)
       bson_iterator_subiterator(&it, &it2);
       while(bson_iterator_next(&it2) != BSON_EOO); //move it2 to end of nested object
       nestedObjLength = bson_iterator_value(&it2) - bson_iterator_value(&it);
-      elog(LOG, "nested object length: %d", nestedObjLength);
       bsonNestedObjData = (char *) palloc(nestedObjLength);
-      elog(LOG, "palloc succeeded");
       memcpy(bsonNestedObjData, bson_iterator_value(&it), nestedObjLength);
-      elog(LOG, "memcpy succeeded");
       result_str = cstring_to_text_with_len(bsonNestedObjData, nestedObjLength);
-      elog(LOG, "cstring to text succeeded");
       break;
 	}
 
@@ -411,7 +406,6 @@ bson_object_field_text(PG_FUNCTION_ARGS)
   text     *result_str = NULL;
   char     int_str[25];
 
-  elog(LOG, "In bson_object_field normal");
   text     *bson = PG_GETARG_TEXT_P(0);
   text     *fname = PG_GETARG_TEXT_P(1);
   char     *fnamestr = text_to_cstring(fname);
@@ -452,7 +446,6 @@ bson_object_field_as_int(PG_FUNCTION_ARGS)
   bson_iterator it;
   int32 result;
 
-  elog(LOG, "In bson object field as int");
   text     *bson = PG_GETARG_TEXT_P(0);
   text     *fname = PG_GETARG_TEXT_P(1);
   char     *fnamestr = text_to_cstring(fname);
@@ -463,11 +456,9 @@ bson_object_field_as_int(PG_FUNCTION_ARGS)
 
   if(bson_find(&it, b, fnamestr) == BSON_INT){
     result = (int32) bson_iterator_int(&it);
-    elog(LOG, "int32 result: %d", result);
     PG_RETURN_INT32(result);
   }
   else{
-    elog(LOG, "returning null from bson int!");
     PG_RETURN_NULL();
   }
 }
@@ -478,7 +469,6 @@ bson_object_field_as_bool(PG_FUNCTION_ARGS)
   bson b[1];
   bson_iterator it;
 
-  elog(LOG, "In bson object field as boolean");
   text     *bson = PG_GETARG_TEXT_P(0);
   text     *fname = PG_GETARG_TEXT_P(1);
   char     *fnamestr = text_to_cstring(fname);
@@ -506,7 +496,6 @@ bson_array_element(PG_FUNCTION_ARGS)
   int      nestedObjLength;
   int i;
 
-  elog(LOG, "In bson_array_element");
   text     *bson = PG_GETARG_TEXT_P(0);
   int      arrIndex = PG_GETARG_INT32(1);
   char     *bsonData = text_to_cstring_no_null(bson);

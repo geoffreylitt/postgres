@@ -297,11 +297,8 @@ bson_out(PG_FUNCTION_ARGS)
 {
 
 	/*I think this is just for literally printing out output, so not important*/
-	elog(LOG, "in bson_out");
 
 	Datum		txt = PG_GETARG_DATUM(0);
-
-	elog(LOG, "getarg_datum succeeded");
 
 	PG_RETURN_CSTRING(TextDatumGetCString(txt));
 }
