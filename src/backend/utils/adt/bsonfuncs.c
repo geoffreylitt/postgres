@@ -388,7 +388,7 @@ bson_object_field(PG_FUNCTION_ARGS)
       while(bson_iterator_next(&it2) != BSON_EOO); //move it2 to end of nested object
       nestedObjLength = bson_iterator_value(&it2) - bson_iterator_value(&it);
       elog(LOG, "nested object length: %d", nestedObjLength);
-      result_str = (char *) palloc(nestedObjLength);
+      bsonNestedObjData = (char *) palloc(nestedObjLength);
       elog(LOG, "palloc succeeded");
       memcpy(bsonNestedObjData, bson_iterator_value(&it), nestedObjLength);
       elog(LOG, "memcpy succeeded");
